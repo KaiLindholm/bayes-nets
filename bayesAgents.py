@@ -39,6 +39,7 @@ BOTH_BOTTOM_VAL = "bothBottom"
 LEFT_TOP_VAL = "leftTop"
 LEFT_BOTTOM_VAL = "leftBottom"
 Y_POS_VALS = [BOTH_TOP_VAL, BOTH_BOTTOM_VAL, LEFT_TOP_VAL, LEFT_BOTTOM_VAL]
+Y_PROB_VALS = [PROB_BOTH_TOP, PROB_BOTH_BOTTOM, PROB_ONLY_LEFT_TOP, PROB_ONLY_LEFT_BOTTOM]
 
 FOOD_HOUSE_VAR = "foodHouse"
 GHOST_HOUSE_VAR = "ghostHouse"
@@ -95,11 +96,27 @@ def constructBayesNet(gameState):
     obsVars = []
     edges = []
     variableDomainsDict = {}
-
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
-
+    
+    for housePos in gameState.getPossibleHouses():
+        for obsPos in gameState.getHouseWalls(housePos):
+            obsVar = OBS_VAR_TEMPLATE % obsPos
+            obsVars.append(obsVar)
+            
+    foodHouseRelations = [(FOOD_HOUSE_VAR, food) for food in obsVars]
+    ghostHouseRelations = [(GHOST_HOUSE_VAR, ghost) for ghost in obsVars]
+    
+    edges = [(X_POS_VAR, FOOD_HOUSE_VAR), (X_POS_VAR, GHOST_HOUSE_VAR), 
+             (Y_POS_VAR, FOOD_HOUSE_VAR), (Y_POS_VAR, GHOST_HOUSE_VAR)] + \
+             foodHouseRelations + ghostHouseRelations
+             
+    variableDomainsDict = {X_POS_VAR: X_POS_VALS, 
+                           Y_POS_VAR: Y_POS_VALS,
+                           FOOD_HOUSE_VAR: HOUSE_VALS, 
+                           GHOST_HOUSE_VAR: HOUSE_VALS}
+        
+    for obsVar in obsVars:
+        variableDomainsDict[obsVar] = OBS_VALS
+    # ------ End Problem 1 Code -------- #
     variables = [X_POS_VAR, Y_POS_VAR] + HOUSE_VARS + obsVars
     net = bn.constructEmptyBayesNet(variables, edges, variableDomainsDict)
     return net, obsVars
@@ -115,6 +132,7 @@ def fillXCPT(bayesNet, gameState):
     xFactor = bn.Factor([X_POS_VAR], [], bayesNet.variableDomainsDict())
     xFactor.setProbability({X_POS_VAR: FOOD_LEFT_VAL}, PROB_FOOD_LEFT)
     xFactor.setProbability({X_POS_VAR: GHOST_LEFT_VAL}, 1 - PROB_FOOD_LEFT)
+    
     bayesNet.setCPT(X_POS_VAR, xFactor)
 
 def fillYCPT(bayesNet, gameState):
@@ -128,9 +146,9 @@ def fillYCPT(bayesNet, gameState):
     """
 
     yFactor = bn.Factor([Y_POS_VAR], [], bayesNet.variableDomainsDict())
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    for prob, pos in zip(Y_PROB_VALS, Y_POS_VALS):  
+        yFactor.setProbability({Y_POS_VAR: pos}, prob)
+    
     bayesNet.setCPT(Y_POS_VAR, yFactor)
 
 def fillHouseCPT(bayesNet, gameState):

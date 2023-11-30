@@ -44,7 +44,7 @@ def joinFactorsByVariableWithCallTracking(callTrackingList=None):
         # typecheck portion
         numVariableOnLeft = len([factor for factor in currentFactorsToJoin if joinVariable in factor.unconditionedVariables()])
         if numVariableOnLeft > 1:
-            print("Factor failed joinFactorsByVariable typecheck: ", factor)
+            print("Factor failed joinFactorsByVariable typecheck: ", factors)
             raise ValueError("The joinBy variable can only appear in one factor as an \nunconditioned variable. \n" +  
                                "joinVariable: " + str(joinVariable) + "\n" +
                                ", ".join(map(str, [factor.unconditionedVariables() for factor in currentFactorsToJoin])))
@@ -86,25 +86,38 @@ def joinFactors(factors):
     Factor.unconditionedVariables
     Factor.conditionedVariables
     Factor.variableDomainsDict
-    """
+    """    
 
-    # typecheck portion
     setsOfUnconditioned = [set(factor.unconditionedVariables()) for factor in factors]
+    setsOfConditioned = [set(factor.conditionedVariables()) for factor in factors]
+
     if len(factors) > 1:
         intersect = functools.reduce(lambda x, y: x & y, setsOfUnconditioned)
         if len(intersect) > 0:
-            print("Factor failed joinFactors typecheck: ", factor)
+            print("Factor failed joinFactors typecheck: ", factors)
             raise ValueError("unconditionedVariables can only appear in one factor. \n"
                     + "unconditionedVariables: " + str(intersect) + 
                     "\nappear in more than one input factor.\n" + 
                     "Input factors: \n" +
                     "\n".join(map(str, factors)))
+            
+    # Union of all unconditioned variables and conditioned variables
+    unionUnconditioned = set.union(*setsOfUnconditioned)
+    unionConditioned = set.union(*setsOfConditioned)
+    # Set of conditioned variables that are not in the union of all conditioned variables
+    conditionedSet = unionConditioned - unionUnconditioned
+    
+    domain = list(factors)[0].variableDomainsDict()
+    joint = Factor(unionUnconditioned, conditionedSet, domain)
+    
+    # Update the probabilities of the joinedFactor
+    for assignment in joint.getAllPossibleAssignmentDicts():
+        probability = 1
+        for factor in factors:         
+            probability *= factor.getProbability(assignment)        
+        joint.setProbability(assignment, probability)
 
-
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
-
+    return joint
 
 def eliminateWithCallTracking(callTrackingList=None):
 
