@@ -145,6 +145,7 @@ def eliminateWithCallTracking(callTrackingList=None):
         Factor.conditionedVariables
         Factor.variableDomainsDict
         """
+       
         # autograder tracking -- don't remove
         if not (callTrackingList is None):
             callTrackingList.append(('eliminate', eliminationVariable))
@@ -163,10 +164,28 @@ def eliminateWithCallTracking(callTrackingList=None):
                     + "can't eliminate \nthat variable.\n" + \
                     "eliminationVariable:" + str(eliminationVariable) + "\n" +\
                     "unconditionedVariables: " + str(factor.unconditionedVariables()))
+            
+        #------------------------------------------------------------#     
+        
+        unconditionedVar = factor.unconditionedVariables()
+        conditionedVar = factor.conditionedVariables()
+        domain = factor.variableDomainsDict()
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        unconditionedVar.remove(eliminationVariable)        # eliminate the variable from the unconditioned 
+        
+        marginalized = Factor(unconditionedVar, conditionedVar, domain)
+        assignments = marginalized.getAllPossibleAssignmentDicts()
+        
+        # recompute the probabilities for the marginalized factor
+        for assignment in assignments:
+            prob = 0.0
+            
+            for eliminate in domain[eliminationVariable]:
+                assignment[eliminationVariable] = eliminate
+                prob += factor.getProbability(assignment)
+            
+            marginalized.setProbability(assignment, prob)
+        return marginalized
 
     return eliminate
 
@@ -220,7 +239,25 @@ def normalize(factor):
                             "so that total probability will sum to 1\n" + 
                             str(factor))
 
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
-
+    norm = sum([factor.getProbability(assignment) for assignment in factor.getAllPossibleAssignmentDicts()])
+    if norm == 0.0:
+        return None
+    
+    unconditionedVar = factor.unconditionedVariables()
+    conditionedVar = factor.conditionedVariables()
+    domain = factor.variableDomainsDict()
+    
+    # remove the unconditioned variables with only one entry in their domain. As they are conditioned variables
+    for unconditioned in factor.unconditionedVariables():
+        var = domain[unconditioned]
+        if len(var) == 1:
+            unconditionedVar.remove(unconditioned)
+            conditionedVar.add(unconditioned)
+            
+    normalized = Factor(unconditionedVar, conditionedVar, domain)
+    for assignment in factor.getAllPossibleAssignmentDicts(): 
+        normalized.setProbability(assignment, factor.getProbability(assignment)/norm)    
+    
+    return normalized
+    
+    
