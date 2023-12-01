@@ -278,10 +278,14 @@ def getMostLikelyFoodHousePosition(evidence, bayesNet, eliminationOrder):
 
     (This should be a very short method.)
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
 
+    foodHouseMarginal = inference.inferenceByVariableElimination(bayesNet, [FOOD_HOUSE_VAR], evidence, eliminationOrder)    
+    
+    # Find the best location of the food house by finding the assignment with the highest probability. index is added to the tuple to help return the correct type. 
+    bestAssignment = max([(foodHouseMarginal.getProbability(assignment), assignment[FOOD_HOUSE_VAR], index) # (probability, foodHouseVal, index)
+                            for index, assignment in enumerate(foodHouseMarginal.getAllPossibleAssignmentDicts())])
+    
+    return foodHouseMarginal.getAllPossibleAssignmentDicts()[bestAssignment[2]] # return the assignment with the highest probability
 
 class BayesAgent(game.Agent):
 

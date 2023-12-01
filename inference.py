@@ -70,7 +70,6 @@ def inferenceByEnumeration(bayesNet, queryVariables, evidenceDict):
     return queryConditionedOnEvidence
 
 def inferenceByVariableEliminationWithCallTracking(callTrackingList=None):
-
     def inferenceByVariableElimination(bayesNet, queryVariables, evidenceDict, eliminationOrder):
         """
         Question 6: Your inference by variable elimination implementation
@@ -128,11 +127,16 @@ def inferenceByVariableEliminationWithCallTracking(callTrackingList=None):
             eliminationVariables = bayesNet.variablesSet() - set(queryVariables) -\
                                    set(evidenceDict.keys())
             eliminationOrder = sorted(list(eliminationVariables))
-
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
-
+        #---------------------------------
+        
+        factors = bayesNet.getAllCPTsWithEvidence(evidenceDict)     
+        for node in eliminationOrder:
+            factors, joint = joinFactorsByVariable(factors, node); 
+            
+            if len(joint.unconditionedVariables()) > 1:  
+                factors.append(eliminate(joint, node))
+                
+        return normalize(joinFactors(factors))
 
     return inferenceByVariableElimination
 
